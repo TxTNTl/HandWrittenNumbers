@@ -6,11 +6,10 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 import config
-from datetime import datetime
 import os
 
 
-def load_dataset():
+def load_dataset(mode):
     # 定义数据变换
     transform = transforms.Compose([
         transforms.ToTensor()
@@ -22,20 +21,35 @@ def load_dataset():
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
 
-    # 尝试下载数据集
-    try:
-        train_set = torchvision.datasets.MNIST(root=data_dir, train=True, download=True, transform=transform)
-        test_set = torchvision.datasets.MNIST(root=data_dir, train=False, download=True, transform=transform)
-        return train_set, test_set
-    except Exception as e:
-        print(f"Error occurred: {e}")
-    return None, None
+    # 建议在设置目录预先下载好数据集，root代表路径，train代表是训练还是测试，download代表不存在数据集是否下载，transform代表输入进来之后如何变化
+    if mode == 'train':
+        try:
+            train_set = torchvision.datasets.MNIST(root=data_dir, train=True, download=True, transform=transform)
+            return train_set
+        except Exception as e:
+            print(f"Error occurred: {e}")
+
+    elif mode == 'test':
+        try:
+            test_set = torchvision.datasets.MNIST(root=data_dir, train=False, download=True, transform=transform)
+            return test_set
+        except Exception as e:
+            print(f"Error occurred: {e}")
+    else:
+        print("Invalid mode")
+        return None, None
 
 
-def train_model(model: Model, train_loader: DataLoader):
-    criterion = nn.CrossEntropyLoss()  # 损失函数
+def train_model():
+    model = Model()
+    train_set = load_dataset('train')
+    train_loader = DataLoader(train_set, batch_size=64, shuffle=True)
+
+    # 损失函数和优化器
+    criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
+    # 开启训练模式
     model.train()
     for i in range(config.TRAINING_SET['num_epochs']):
         running_loss = 0.0
@@ -48,34 +62,20 @@ def train_model(model: Model, train_loader: DataLoader):
             running_loss += loss.item()
         print(f"epoch: {i} / {config.TRAINING_SET['num_epochs'] - 1}, loss: {running_loss / len(train_loader)}")
 
+    print("Finished Training")
+    print("The name for saving model?")
     text = f"models/{input()}.pth"
     print(text)
     torch.save(model, text)
-
     print("training finished")
     return
 
 
-def main():
-    model = Model()
-    train_set, test_set = load_dataset()
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=64, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(test_set, batch_size=64, shuffle=True)
-    mode = eval(input())
-    if mode == 1:
-        # train mode
-        train_model(model, train_loader)
+def test_model():
+    test_set = load_dataset('test')
+    test_loader = DataLoader(test_set, batch_size=64, shuffle=True)
 
-    elif mode == 2:
-        # test mode
-        test_model(model, test_loader)
-
-    else:
-        print("wrong mode")
-
-
-def test_model(model: Model, test_loader: DataLoader):
-    # 进行测试
+    print("Please input the name of the model")
     model = torch.load(f'models/{input()}.pth', weights_only=False)
 
     model.eval()
@@ -90,6 +90,21 @@ def test_model(model: Model, test_loader: DataLoader):
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
     print(correct, total, correct/total)
+
+
+def main():
+    print("Choose your mode. 1 for training or 2 for testing mode")
+    mode = eval(input())
+    if mode == 1:
+        # train mode
+        train_model()
+
+    elif mode == 2:
+        # test mode
+        test_model()
+
+    else:
+        print("wrong mode")
 
 
 if __name__ == "__main__":

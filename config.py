@@ -7,6 +7,6 @@ IMAGE_SET = {
 }
 
 TRAINING_SET = {
-    'num_epochs' : 10,
+    'num_epochs' : 100,
     'device' : 'cuda' if torch.cuda.is_available() else 'cpu',
 }

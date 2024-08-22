@@ -13,8 +13,3 @@ class Model(nn.Module):
         y = self.layer1(x)
         z = self.layer2(torch.relu(y))
         return z
-
-
-
-
-
