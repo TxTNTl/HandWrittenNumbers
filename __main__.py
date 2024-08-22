@@ -65,7 +65,10 @@ def train_model():
     print("Finished Training")
     print("The name for saving model?")
     text = f"models/{input()}.pth"
-    print(text)
+
+    model_dir = './models'
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
     torch.save(model, text)
     print("training finished")
     return
@@ -76,6 +79,9 @@ def test_model():
     test_loader = DataLoader(test_set, batch_size=64, shuffle=True)
 
     print("Please input the name of the model")
+    model_dir = './models'
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
     model = torch.load(f'models/{input()}.pth', weights_only=False)
 
     model.eval()
